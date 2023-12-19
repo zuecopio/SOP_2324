@@ -25,7 +25,6 @@ bin/monitores: lec-esc-monitores.c
 	
 monitores: bin/monitores
 	./bin/le-monitores
-
 	
 clean:
 	rm -r bin 
