@@ -14,43 +14,54 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+//-----[ COLORES ]------------------------------------(+)
+
+#define RESET_COLOR   "\e[0m"
+#define CYAN_T        "\e[1;36m"
+#define YELLOW        "\e[1;33m"
+#define WHITE         "\e[1;37m"
+#define RED           "\e[0;31m"
+  
+//----------------------------------------------------(-)
+
 #define MAX_L  3
 #define MAX_E  2 
 int dato = 0;
 
-void *lector(void *arg) {
+void *lector (void *arg) {
     int id = *((int *)arg);
     while (1) {
        
         // Leer datos
-        printf("Lector %d leyendo: %d\n", id, dato);
+        printf ( YELLOW " |  LECTORES  -> %3d | · |   leyendo    >>  %3d |\n" RESET_COLOR, id, dato);
         
         // Retraso aleatorio de hasta 1 segundo (en microsegundos)
-        usleep(rand() % 1000000);
+        usleep (rand() % 1000000);
     }
 }
 
-void *escritor(void *arg) {
+void *escritor (void *arg) {
     int id = *((int *)arg);
     int aux;
     while (1) {
         
         // Escribir datos
         aux = dato;
-        usleep(rand() % 1000000);
+        usleep (rand() % 1000000);
         aux++;
-        usleep(rand() % 1000000);
+        usleep (rand() % 1000000);
         dato = aux;
-        printf("Escritor %d escribiendo: %d\n", id, dato);
+        printf ( CYAN_T " | ESCRITORES -> %3d | · | escribiendo  <<  %3d |\n" RESET_COLOR, id, dato);
 
         // Retraso aleatorio de hasta 2 segundos (en microsegundos)
-        usleep(rand() % 2000000);
+        usleep (rand() % 2000000);
     }
 }
 
-int main() {
-    
+int main () {
 
+    printf("\n");
+    
     // MAX_L lectores y MAX_E escritores
     pthread_t lectores[MAX_L], escritores[MAX_E];
     int argLectores[MAX_L], argEscritores[MAX_E];
@@ -58,33 +69,33 @@ int main() {
     pthread_attr_t atrib;
 
     // Inicializar la semilla del generador de números aleatorios
-    srand(time(NULL)); 
+    srand (time(NULL)); 
 
     // Inicializar la estructura pthread_attr
-    pthread_attr_init(&atrib);
+    pthread_attr_init (&atrib);
 
     // Crear lectores
-    for(i = 0; i < MAX_L; i++) {
+    for (i = 0; i < MAX_L; i++) {
       argLectores[i] = i;
-      pthread_create(&lectores[i], &atrib, lector, &argLectores[i]);
+      pthread_create (&lectores[i], &atrib, lector, &argLectores[i]);
     }
 
     // Crear escritores
-    for(i = 0; i < MAX_E; i++) {
+    for (i = 0; i < MAX_E; i++) {
       argEscritores[i] = i;
-      pthread_create(&escritores[i], &atrib, escritor, &argEscritores[i]);
+      pthread_create (&escritores[i], &atrib, escritor, &argEscritores[i]);
     }
 
     // Esperar a que los hilos terminen
-    for(i = 0; i < MAX_L; i++) {
-      pthread_join(lectores[i], NULL);
+    for (i = 0; i < MAX_L; i++) {
+      pthread_join (lectores[i], NULL);
     }
     
-    for(i = 0; i < MAX_E; i++) {
-      pthread_join(escritores[i], NULL);
+    for (i = 0; i < MAX_E; i++) {
+      pthread_join (escritores[i], NULL);
     }
     
     // Acaba el main
-    printf("Acaba el main\n");
+    printf ("Acaba el main\n");
     return 0;
 }
