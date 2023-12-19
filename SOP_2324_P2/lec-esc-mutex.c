@@ -14,6 +14,16 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+//-----[ COLORES ]------------------------------------(+)
+
+#define RESET_COLOR   "\e[0m"
+#define CYAN_T        "\e[1;36m"
+#define YELLOW        "\e[1;33m"
+#define WHITE         "\e[1;37m"
+#define RED           "\e[0;31m"
+  
+//----------------------------------------------------(-)
+
 #define MAX_L  3
 #define MAX_E  2
 
@@ -33,24 +43,25 @@ void *lector(void *arg) {
         pthread_mutex_lock(&mutex); // P(mutex)
         
             // 2) Incremento el número de lectores
-            while(nlectores <= -1) { pthread_cond_wait(&cond_lectores, &mutex); }
+            while (nlectores == -1) { pthread_cond_wait(&cond_lectores, &mutex); }
             nlectores++;
-            printf("nl: %d --> ", nlectores);
+            //printf("nl: %d --> ", nlectores);
 	
         // 3) Abro mutex
         pthread_mutex_unlock(&mutex); // V(mutex)
 
             // 4) Leer datos
-            printf("Lector %d leyendo: %d\n", id, dato);
+            printf ( YELLOW " |  LECTORES  -> %3d | · |   leyendo    >>  %3d |" RESET_COLOR, id, dato);
 
         // 5) Cierro mutex
         pthread_mutex_lock(&mutex); // P(mutex)
         
             // 6) Decremento el número de lectores
+            printf ( YELLOW " · |  nl -> %3d |\n" RESET_COLOR, nlectores);
             nlectores--;
             
             // 7) Si soy el último, entonces mando (una señal) al posible escritor que esté esperando
-            if(nlectores == 0) { pthread_cond_signal(&cond_escritores); }
+            if (nlectores == 0) { pthread_cond_broadcast(&cond_escritores); }
         
         // 8) Abro mutex
         pthread_mutex_unlock(&mutex); // V(mutex)
@@ -69,7 +80,7 @@ void *escritor(void *arg) {
         pthread_mutex_lock(&mutex); // P(mutex)
         
             // 2) Si no se cumple la condición se suspende y abre el mutex
-            if(nlectores != 0) { pthread_cond_wait(&cond_escritores, &mutex); }
+            while (nlectores != 0) { pthread_cond_wait(&cond_escritores, &mutex); }
             nlectores = -1;
 
         // 3) Abro el mutex
@@ -81,7 +92,7 @@ void *escritor(void *arg) {
             aux++;
             usleep(rand() % 1000000);
             dato = aux;
-            printf("\n   Escritor %d escribiendo: (%d)\n\n", id, dato);
+            printf ( CYAN_T " | ESCRITORES -> %3d | · | escribiendo  <<  %3d |\n" RESET_COLOR, id, dato);
 
         // 5) Cierro el mutex
         pthread_mutex_lock(&mutex); // P(mutex)
