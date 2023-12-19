@@ -116,18 +116,33 @@ void terminar_escritura() {
 //---------------------------------------------------------(-)
 
 void *lector(void *arg) {
-    for (int i = 0; i < 5; i++) {
+    int id = *((int *)arg);
+    while (1) {
+    //for (int i = 0; i < 5; i++) {
         comenzar_lectura();
-        printf("Lector leyendo...\n");
+
+            printf("nl: %d --> ", nlectores);
+            printf("Lector %d leyendo: %d\n", id, dato);
+
         terminar_lectura();
     }
     pthread_exit(NULL);
 }
 
 void *escritor(void *arg) {
-    for (int i = 0; i < 5; i++) {
+    int id = *((int *)arg);
+    int aux;
+    while (1) {
+    //for (int i = 0; i < 5; i++) {
         comenzar_escritura();
-        printf("Escritor escribiendo...\n");
+
+            aux = dato;
+            usleep(rand() % 1000000);
+            aux++;
+            usleep(rand() % 1000000);
+            dato = aux;
+            printf("\n   Escritor %d escribiendo: (%d)\n\n", id, dato);
+
         terminar_escritura();
     }
     pthread_exit(NULL);
