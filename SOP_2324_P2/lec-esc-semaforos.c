@@ -80,7 +80,8 @@ void *escritor(void *arg) {
 }
 
 int main() {
-    
+
+    printf("\n");
 
     // Inicialización semáforos
     sem_init(&mutex, 0, 1);
