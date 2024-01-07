@@ -17,10 +17,8 @@
 //-----[ COLORES ]------------------------------------(+)
 
 #define RESET_COLOR   "\e[0m"
-#define CYAN_T        "\e[1;36m"
-#define YELLOW        "\e[1;33m"
-#define WHITE         "\e[1;37m"
-#define RED           "\e[0;31m"
+#define ESCRITORES    "\e[1;37m\e[46m"
+#define LECTORES      "\e[1;37m"
   
 //----------------------------------------------------(-)
 
@@ -29,11 +27,12 @@
 int dato = 0;
 
 void *lector (void *arg) {
+
     int id = *((int *)arg);
     while (1) {
        
         // Leer datos
-        printf ( YELLOW " |  LECTORES  -> %3d | · |   leyendo    >>  %3d |\n" RESET_COLOR, id, dato);
+        printf (LECTORES " |  LECTOR  ->  %d | · | dato >>  %3d |" RESET_COLOR "\n", id, dato);
         
         // Retraso aleatorio de hasta 1 segundo (en microsegundos)
         usleep (rand() % 1000000);
@@ -41,6 +40,7 @@ void *lector (void *arg) {
 }
 
 void *escritor (void *arg) {
+
     int id = *((int *)arg);
     int aux;
     while (1) {
@@ -51,7 +51,7 @@ void *escritor (void *arg) {
         aux++;
         usleep (rand() % 1000000);
         dato = aux;
-        printf ( CYAN_T " | ESCRITORES -> %3d | · | escribiendo  <<  %3d |\n" RESET_COLOR, id, dato);
+        printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR "\n", id, dato);
 
         // Retraso aleatorio de hasta 2 segundos (en microsegundos)
         usleep (rand() % 2000000);
@@ -60,7 +60,34 @@ void *escritor (void *arg) {
 
 int main () {
 
-    printf("\n");
+    //-----[ MENÚ DE INICIO ]-----------------------------(+)
+    
+    printf ("\n");
+
+    printf (" ============= LEC-ESC-HILOS.C ============ \n");    
+    printf (" ========================================== \n");
+    printf ("   Programación con hilos. Problema de la   \n");
+    printf ("   sección crítica.                         \n");
+    printf (" ========================================== \n");
+    printf ("   No hay ningún mecanismo para evitar la   \n");
+    printf ("   condición de carrera, por lo que esta    \n");
+    printf ("   se puede apreciar en el código impreso.  \n");
+    printf ("                                            \n");    
+    printf ("   Diferentes escritores vuelven a escribir \n");  
+    printf ("   el mismo número, ahí es donde se ve que  \n");
+    printf ("   no hay un control en el acceso al dato,  \n");
+    printf ("   entonces este se está modificando        \n");
+    printf ("   simultaneamente por varios escritores.   \n");
+    printf (" ========================================== \n");
+    printf ("   Teclear Ctrl + C para finalizar la       \n");
+    printf ("   ejecución del programa.                  \n");
+    printf (" ========================================== \n");
+    printf (" Pulsar cualquier tecla para continuar... ");
+    getchar ();
+
+    printf ("\n");
+
+    //----------------------------------------------------(-)
     
     // MAX_L lectores y MAX_E escritores
     pthread_t lectores[MAX_L], escritores[MAX_E];
