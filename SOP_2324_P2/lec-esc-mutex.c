@@ -17,10 +17,10 @@
 //-----[ COLORES ]------------------------------------(+)
 
 #define RESET_COLOR   "\e[0m"
-#define CYAN_T        "\e[1;36m"
-#define YELLOW        "\e[1;33m"
-#define WHITE         "\e[1;37m"
-#define RED           "\e[0;31m"
+#define ESCRITORES    "\e[1;37m\e[46m"
+#define LECTORES      "\e[1;37m"
+#define INFO_LEC      "\e[1;35m"
+#define INFO_ESC      "\e[1;36m"
   
 //----------------------------------------------------(-)
 
@@ -30,48 +30,51 @@
 
 int dato = 0;
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;         // Mutex para gestionar la exclusión mutua
-pthread_cond_t cond_lectores = PTHREAD_COND_INITIALIZER;   // Variable condición para lectores
-pthread_cond_t cond_escritores = PTHREAD_COND_INITIALIZER; // Variable condición para escritores
-int nlectores = 0; // Variable que indica el número de lectores leyendo
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;          // Mutex para gestionar la exclusión mutua
+pthread_cond_t cond_lectores = PTHREAD_COND_INITIALIZER;    // Variable condición para lectores
+pthread_cond_t cond_escritores = PTHREAD_COND_INITIALIZER;  // Variable condición para escritores
+int nlectores = 0;                                          // Variable que indica el número de lectores leyendo
 
-void *lector(void *arg) {
+void *lector (void *arg) {
+
     int id = *((int *)arg);
     while (1) {
        
         // 1) Cierro mutex
-        pthread_mutex_lock(&mutex); // P(mutex)
+        pthread_mutex_lock (&mutex); // P(mutex)
         
-            // 2) Incremento el número de lectores
+            // 2) Si nlectores es -1, es que ya hay un escritor en marcha,
+            //    entonces se suspende y abre el mutex. Si nlectores es 
+            //    diferente de -1, incrementa el número de lectores. 
             while (nlectores == -1) { pthread_cond_wait(&cond_lectores, &mutex); }
             nlectores++;
-            //printf("nl: %d --> ", nlectores);
 	
         // 3) Abro mutex
-        pthread_mutex_unlock(&mutex); // V(mutex)
+        pthread_mutex_unlock (&mutex); // V(mutex)
 
             // 4) Leer datos
-            printf ( YELLOW " |  LECTORES  -> %3d | · |   leyendo    >>  %3d |" RESET_COLOR, id, dato);
+            // Como se ha implemntado un mútex para los escritores, cuando haya lectores leyendo, el nº de esc. concurrentes siempre será 0
+            printf (LECTORES " |  LECTOR  ->  %d | · | dato >>  %3d | ······· " INFO_LEC "| lec. activos = %d | · | esc. activos = 0 |" RESET_COLOR "\n", id, dato, nlectores);
 
         // 5) Cierro mutex
-        pthread_mutex_lock(&mutex); // P(mutex)
+        pthread_mutex_lock (&mutex); // P(mutex)
         
             // 6) Decremento el número de lectores
-            printf ( YELLOW " · |  nl -> %3d |\n" RESET_COLOR, nlectores);
             nlectores--;
             
-            // 7) Si soy el último, entonces mando (una señal) al posible escritor que esté esperando
-            if (nlectores == 0) { pthread_cond_broadcast(&cond_escritores); }
+            // 7) Si soy el último, entonces aviso a los posibles escritores que estén esperando
+            if (nlectores == 0) { pthread_cond_broadcast (&cond_escritores); }
         
         // 8) Abro mutex
-        pthread_mutex_unlock(&mutex); // V(mutex)
+        pthread_mutex_unlock (&mutex); // V(mutex)
         
             // 9) Retraso aleatorio de hasta 1 segundo (en microsegundos)
-            usleep(rand() % 1000000);
+            usleep (rand() % 1000000);
     }
 }
 
-void *escritor(void *arg) {
+void *escritor (void *arg) {
+
     int id = *((int *)arg);
     int aux;
     while (1) {
@@ -79,38 +82,72 @@ void *escritor(void *arg) {
         // 1) Cierro el mutex
         pthread_mutex_lock(&mutex); // P(mutex)
         
-            // 2) Si no se cumple la condición se suspende y abre el mutex
-            while (nlectores != 0) { pthread_cond_wait(&cond_escritores, &mutex); }
+            // 2) Si nlectores es -1, es que ya hay un escritor en marcha, 
+            //    y si nlectores > 0 es que hay lectores leyendo. Si se
+            //    cumple la condición se suspende y abre el mutex. 
+            while (nlectores != 0) { pthread_cond_wait (&cond_escritores, &mutex); }
             nlectores = -1;
 
         // 3) Abro el mutex
-        pthread_mutex_unlock(&mutex); // V(mutex)
+        pthread_mutex_unlock (&mutex); // V(mutex)
 
             // 4) Escribir datos
             aux = dato;
-            usleep(rand() % 1000000);
+            usleep (rand() % 1000000);
             aux++;
-            usleep(rand() % 1000000);
+            usleep (rand() % 1000000);
             dato = aux;
-            printf ( CYAN_T " | ESCRITORES -> %3d | · | escribiendo  <<  %3d |\n" RESET_COLOR, id, dato);
+            // Cuando nlectores = -1, quiere decir que hay escritores, por lo tanto no hay lectores. El nº de esc. concurrentes siempre será 1 y nº de lec. será 0
+            printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = 1 |" RESET_COLOR "\n", id, dato, nlectores+1);
 
         // 5) Cierro el mutex
-        pthread_mutex_lock(&mutex); // P(mutex)
+        pthread_mutex_lock (&mutex); // P(mutex)
 
             // 6) Mando (una señal) al posible escritor que esté esperando
             nlectores = 0;
-            pthread_cond_broadcast(&cond_lectores);
+            pthread_cond_broadcast (&cond_lectores);
 
         // 7) Abro el mutex
-        pthread_mutex_unlock(&mutex); // V(mutex)
+        pthread_mutex_unlock (&mutex); // V(mutex)
 
             // 8) Retraso aleatorio de hasta 2 segundos (en microsegundos)
-            usleep(rand() % 2000000);
+            usleep (rand() % 2000000);
     }
 }
 
 int main() {
     
+    //-----[ MENÚ DE INICIO ]-----------------------------(+)
+    
+    printf ("\n");
+
+    printf (" ============= LEC-ESC-MUTEX.C ============ \n");    
+    printf (" ========================================== \n");
+    printf ("   Sección crítica: solución con mutexes y  \n");
+    printf ("   variables condición.                     \n");
+    printf (" ========================================== \n");
+    printf ("   Para evitar que la condición de carrera  \n");
+    printf ("   perjudique al código, se protejen las    \n");
+    printf ("   secciones críticas mediante mutexes y    \n");
+    printf ("   variables condición.                     \n");
+    printf ("                                            \n");
+    printf ("   Cuando la variable dato no esté siendo   \n");
+    printf ("   modificada, podría haber uno o varios    \n");
+    printf ("   lectores leyéndola al mismo tiempo. Por  \n");
+    printf ("   otra parte, cuando la variable esté      \n");
+    printf ("   siendo modificada, solamente habrá un    \n");
+    printf ("   escritor sobre ella, y ningún lector en  \n");
+    printf ("   curso.                                   \n");
+    printf (" ========================================== \n");
+    printf ("   Teclear Ctrl + C para finalizar la       \n");
+    printf ("   ejecución del programa.                  \n");
+    printf (" ========================================== \n");
+    printf (" Pulsar cualquier tecla para continuar... ");
+    getchar ();
+
+    printf ("\n");
+
+    //----------------------------------------------------(-)
 
     // MAX_L lectores y MAX_E escritores
     pthread_t lectores[MAX_L], escritores[MAX_E];
@@ -119,33 +156,33 @@ int main() {
     pthread_attr_t atrib;
 
     // Inicializar la semilla del generador de números aleatorios
-    srand(time(NULL)); 
+    srand (time(NULL)); 
 
     // Inicializar la estructura pthread_attr
-    pthread_attr_init(&atrib);
+    pthread_attr_init (&atrib);
 
     // Crear lectores
-    for(i = 0; i < MAX_L; i++) {
+    for (i = 0; i < MAX_L; i++) {
       argLectores[i] = i;
-      pthread_create(&lectores[i], &atrib, lector, &argLectores[i]);
+      pthread_create (&lectores[i], &atrib, lector, &argLectores[i]);
     }
 
     // Crear escritores
-    for(i = 0; i < MAX_E; i++) {
+    for (i = 0; i < MAX_E; i++) {
       argEscritores[i] = i;
-      pthread_create(&escritores[i], &atrib, escritor, &argEscritores[i]);
+      pthread_create (&escritores[i], &atrib, escritor, &argEscritores[i]);
     }
 
     // Esperar a que los hilos terminen
-    for(i = 0; i < MAX_L; i++) {
-      pthread_join(lectores[i], NULL);
+    for (i = 0; i < MAX_L; i++) {
+      pthread_join (lectores[i], NULL);
     }
     
-    for(i = 0; i < MAX_E; i++) {
-      pthread_join(escritores[i], NULL);
+    for (i = 0; i < MAX_E; i++) {
+      pthread_join (escritores[i], NULL);
     }
     
     // Acaba el main
-    printf("Acaba el main\n");
+    printf ("Acaba el main\n");
     return 0;
 }
