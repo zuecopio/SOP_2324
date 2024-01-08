@@ -1,7 +1,7 @@
 /*-----------------------------------------------------+
  |     L E C - E S C - M U T E X . C                   |
  +-----------------------------------------------------+
- |     Versión     : LemonTree_v1                      | 
+ |     Versión     : lec-esc_v1                        | 
  |     Autor       : Marcos Belda Martínez             |
  |     Asignatura  : SOP-GIIROB                        |     
  |     Descripción : Sección crítica: solución con     |
@@ -52,8 +52,9 @@ void *lector (void *arg) {
         // 3) Abro mutex
         pthread_mutex_unlock (&mutex); // V(mutex)
 
-            // 4) Leer datos
-            // Como se ha implemntado un mútex para los escritores, cuando haya lectores leyendo, el nº de esc. concurrentes siempre será 0
+            // 4) Leer datos. Como se ha implemntado un mútex para los escritores, cuando haya lectores leyendo, el nº de esc. activos siempre será 0. Para que todo el 
+            //    mensaje aparezaca en la misma línea, se imprime todo en un solo printf. Esto se debe a que esta sección no está protegida, por lo que, debido a cambios
+            //    de contexto, si la información estuviera dividida en varios printf, podría imprimirse mezclada entre lectores.
             printf (LECTORES " |  LECTOR  ->  %d | · | dato >>  %3d | ······· " INFO_LEC "| lec. activos = %d | · | esc. activos = 0 |" RESET_COLOR "\n", id, dato, nlectores);
 
         // 5) Cierro mutex
@@ -97,8 +98,11 @@ void *escritor (void *arg) {
             aux++;
             usleep (rand() % 1000000);
             dato = aux;
-            // Cuando nlectores = -1, quiere decir que hay escritores, por lo tanto no hay lectores. El nº de esc. concurrentes siempre será 1 y nº de lec. será 0
-            printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = 1 |" RESET_COLOR "\n", id, dato, nlectores+1);
+            // Cuando nlectores = -1, quiere decir que hay escritores, por lo tanto no hay lectores. El nº de esc. activos siempre será 1 y nº de lec. activos será 0. 
+            // En este caso, se puede escoger imprimir la información en uno o varios printf, obtenienfo el mismo resultado. La seccón está protegida de lectores y solo 
+            // puede haber un escritos al la vez.
+            printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR, id, dato);
+            printf (LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = 1 |" RESET_COLOR "\n", nlectores+1);
 
         // 5) Cierro el mutex
         pthread_mutex_lock (&mutex); // P(mutex)
@@ -127,7 +131,7 @@ int main() {
     printf ("   variables condición.                     \n");
     printf (" ========================================== \n");
     printf ("   Para evitar que la condición de carrera  \n");
-    printf ("   perjudique al código, se protejen las    \n");
+    printf ("   perjudique al código, se protegen las    \n");
     printf ("   secciones críticas mediante mutexes y    \n");
     printf ("   variables condición.                     \n");
     printf ("                                            \n");
