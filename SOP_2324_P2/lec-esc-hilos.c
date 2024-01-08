@@ -1,7 +1,7 @@
 /*-----------------------------------------------------+
  |     L E C - E S C - H I L O S . C                   |
  +-----------------------------------------------------+
- |     Versión     : LemonTree_v1                      | 
+ |     Versión     : lec-esc_v1                        | 
  |     Autor       : Marcos Belda Martínez             |
  |     Asignatura  : SOP-GIIROB                        |     
  |     Descripción : Programación con hilos. Problema  |
