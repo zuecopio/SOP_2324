@@ -1,7 +1,7 @@
 /*-----------------------------------------------------+
  |     L E C - E S C - S E M A F O R O S . C           |
  +-----------------------------------------------------+
- |     Versión     : LemonTree_v1                      | 
+ |     Versión     : lec-esc_v1                        | 
  |     Autor       : Marcos Belda Martínez             |
  |     Asignatura  : SOP-GIIROB                        |     
  |     Descripción : Sección crítica: solución con     |
@@ -50,8 +50,11 @@ void *lector (void *arg) {
         
         usleep (1);
         
-        // 3) Leer datos
-        // Como se ha implemntado un semáforo para los escritores, cuando haya lectores leyendo, el nº de esc. activos siempre será 0
+        // 3) Leer datos. Como se ha implemntado un semáforo para los escritores, cuando haya lectores leyendo, el nº de esc. activos siempre será 0. Para que todo el 
+        //    mensaje aparezaca en la misma línea, se imprime todo en un solo printf. Esto se debe a que esta sección no está protegida, por lo que, debido a cambios
+        //    de contexto, si la información estuviera dividida en varios printf, podría imprimirse mezclada entre lectores.
+        //    En muy pocas ocasiones, aparece que lec. activos = -1, la causa es la mencionada anteriormente, que la sección no está protegida, por lo que en algún
+        //    cambio de contexto, la variable nlectores es acabada de modificar por un lector. 
         printf (LECTORES " |  LECTOR  ->  %d | · | dato >>  %3d | ······· " INFO_LEC "| lec. activos = %d | · | esc. activos = 0 |" RESET_COLOR "\n", id, dato, nlectores);
         
         // 4) Decremento el número de lectores
@@ -82,8 +85,10 @@ void *escritor (void *arg) {
     aux++;
     usleep (rand() % 1000000);
     dato = aux;
-    // Como se ha implemntado un semáforo para los escritores, cuando no haya lectores leyendo, el nº de esc. activos siempre será 1
-    printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = 1 |" RESET_COLOR "\n", id, dato, nlectores-1);
+    //    Como se ha implemntado un semáforo para los escritores, cuando no haya lectores leyendo, el nº de esc. activos siempre será 1. En este caso, se puede escoger
+    //    imprimir la información en uno o varios printf, obtenienfo el mismo resultado. La seccón está protegida de lectores y solo puede haber un escritos al la vez.
+    printf (ESCRITORES " | ESCRITOR ->  %d | · | dato <<  %3d |" RESET_COLOR, id, dato);
+    printf (LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = 1 |" RESET_COLOR "\n", nlectores-1);
         
     // 3) Acabo de escribir, entonces desbloqueo al posible escritor que esté esperando
 	sem_post (&m_escritores); // V(m_escritores)
@@ -104,7 +109,7 @@ int main () {
     printf ("   Sección crítica: solución con semáforos. \n");
     printf (" ========================================== \n");
     printf ("   Para evitar que la condición de carrera  \n");
-    printf ("   perjudique al código, se protejen las    \n");
+    printf ("   perjudique al código, se protegen las    \n");
     printf ("   secciones críticas mediante semáforos.   \n");
     printf ("                                            \n");
     printf ("   Cuando la variable dato no esté siendo   \n");
