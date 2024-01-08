@@ -1,7 +1,7 @@
 /*-----------------------------------------------------+
  |     L E C - E S C - M O N I T O R E S . C           |
  +-----------------------------------------------------+
- |     Versión     : LemonTree_v1                      | 
+ |     Versión     : lec-esc_v1                        | 
  |     Autor       : Marcos Belda Martínez             |
  |     Asignatura  : SOP-GIIROB                        |     
  |     Descripción : Sección crítica: solución con     |
@@ -137,6 +137,8 @@ void *lector (void *arg) {
 
         comenzar_lectura ();
 
+            // Para que todo el mensaje aparezaca en la misma línea, se imprime todo en un solo printf. Esto se debe a que esta sección permite la concurrencia de
+            // lectores, por lo que, debido a cambios de contexto, si la información estuviera dividida en varios printf, podría imprimirse mezclada entre lectores.
             printf (LECTORES " |  LECTOR  ->  %d | · | dato >>  %3d | ······· " INFO_LEC "| lec. activos = %d | · | esc. activos = %d |" RESET_COLOR LECTORES" ··· " INFO_LEC "| lec. en espera = %d | · | esc. en espera = %d |" RESET_COLOR "\n", id, dato, nlec_activos, nesc_activos, nlec_esperando, nesc_esperando);
 
         terminar_lectura ();
@@ -156,7 +158,11 @@ void *escritor (void *arg) {
             aux++;
             usleep (rand() % 1000000);
             dato = aux;
-            printf (ESCRITORES " | ESCRITOR ->  %d | · | dato >>  %3d |" RESET_COLOR LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = %d |" RESET_COLOR LECTORES" ··· " INFO_ESC "| lec. en espera = %d | · | esc. en espera = %d |" RESET_COLOR "\n", id, dato, nlec_activos, nesc_activos, nlec_esperando, nesc_esperando);
+            // En este caso, se puede escoger imprimir la información en uno o varios printf, obteniendo el
+            // mismo resultado. La seccón está protegida de lectores y solo puede haber un escritos al la vez.
+            printf (ESCRITORES " | ESCRITOR ->  %d | · | dato >>  %3d |" RESET_COLOR, id, dato);
+            printf (LECTORES " ······· " INFO_ESC "| lec. activos = %d | · | esc. activos = %d |" RESET_COLOR, nlec_activos, nesc_activos);
+            printf (LECTORES" ··· " INFO_ESC "| lec. en espera = %d | · | esc. en espera = %d |" RESET_COLOR "\n", nlec_esperando, nesc_esperando);
 
         terminar_escritura ();
     }
@@ -174,7 +180,7 @@ int main () {
     printf ("   Sección crítica: solución con monitores  \n");
     printf (" ========================================== \n");
     printf ("   Para evitar que la condición de carrera  \n");
-    printf ("   perjudique al código, se protejen las    \n");
+    printf ("   perjudique al código, se protegen las    \n");
     printf ("   secciones críticas mediante monitores.   \n");
     printf ("                                            \n");
     printf ("   Cuando la variable dato no esté siendo   \n");
@@ -184,6 +190,20 @@ int main () {
     printf ("   siendo modificada, solamente habrá un    \n");
     printf ("   escritor sobre ella, y ningún lector en  \n");
     printf ("   curso.                                   \n");
+    printf ("                                            \n");
+    printf ("   En este código se ha añadido información \n");
+    printf ("   extra respecto de semáforos y mútex. Se  \n");
+    printf ("   trata del número de esc. y lec. que      \n");
+    printf ("   están en espera. Se puede apreciar que   \n");
+    printf ("   cuando hay lec. en curso no hay esc. en  \n");
+    printf ("   curso ni en espera.                      \n");
+    printf ("                                            \n");
+    printf ("   Normalmente, siempre que un esc. empieza \n");
+    printf ("   a escribir, el nº de lec. en espera de   \n");
+    printf ("   una orden arriba es 0. Tiene sentido ya  \n");
+    printf ("   que los lectores tienen prioridad, y     \n");
+    printf ("   cuando ya no hay más lec. se puede       \n");
+    printf ("   escribir.                                \n");
     printf (" ========================================== \n");
     printf ("   Teclear Ctrl + C para finalizar la       \n");
     printf ("   ejecución del programa.                  \n");
